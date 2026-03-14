@@ -1,8 +1,5 @@
 flask==3.0.3
 flask-cors==4.0.1
 edge_impulse_linux==1.0.8
-Adafruit-DHT==1.4.0
-smbus2==0.4.3
-RPi.GPIO==0.7.1
-pyserial==3.5
-sqlite3
+opencv-python==4.9.0.80
+numpy==1.26.4
