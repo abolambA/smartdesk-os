@@ -1,6 +1,6 @@
 """
 api_server.py — Flask REST API + App Lab dashboard + UDP discovery
-Run with: python api_server.py
+Run with: python3 api_server.py
 """
 import json, socket, threading
 from datetime import datetime
@@ -14,25 +14,33 @@ from behavioral_engine import BehavioralEngine
 
 app = Flask(__name__, static_folder="dashboard", static_url_path="")
 CORS(app)
-DASHBOARD_DIR = Path(__file__).parent / "dashboard"
-API_PORT, DISCOVERY_PORT = 5000, 5001
+DASHBOARD_DIR  = Path(__file__).parent.parent / "dashboard"
+API_PORT       = 8080        # 5000 conflicts with macOS AirPlay — use 8080
+DISCOVERY_PORT = 5001
+
 sensors = session = camera = behavioral = None
 
-def ok(data=None): return jsonify({"status": "ok", **({"data": data} if data else {})})
-def err(msg, code=400): return jsonify({"status": "error", "message": msg}), code
+def ok(data=None):
+    return jsonify({"status": "ok", **({"data": data} if data else {})})
+
+def err(msg, code=400):
+    return jsonify({"status": "error", "message": msg}), code
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.route("/status")
 def get_status():
     cam = camera.state if camera else {}
     sen = sensors.current if sensors else {}
     return jsonify({
-        "focus_state": cam.get("focus_state", "absent"),
-        "posture_state": cam.get("posture_state", "upright"),
-        "focus_confidence": cam.get("focus_confidence", 0.0),
+        "focus_state":        cam.get("focus_state",        "absent"),
+        "posture_state":      cam.get("posture_state",      "upright"),
+        "focus_confidence":   cam.get("focus_confidence",   0.0),
         "posture_confidence": cam.get("posture_confidence", 0.0),
-        "sensors": sen, "camera_active": sen.get("camera_active", False),
-        "session_active": session.is_active if session else False,
-        "timestamp": datetime.now().isoformat(),
+        "sensors":            sen,
+        "camera_active":      sen.get("camera_active",      False),
+        "session_active":     session.is_active if session else False,
+        "timestamp":          datetime.now().isoformat(),
     })
 
 @app.route("/session")
@@ -67,7 +75,7 @@ def get_insights():
 @app.route("/camera/toggle", methods=["POST"])
 def toggle_camera():
     if not sensors: return err("Sensor manager not ready")
-    body = request.get_json(silent=True) or {}
+    body   = request.get_json(silent=True) or {}
     active = body.get("active", not sensors.camera_active)
     sensors.set_camera_active(active)
     return ok({"camera_active": active})
@@ -76,14 +84,23 @@ def toggle_camera():
 def serve_dashboard():
     if DASHBOARD_DIR.exists():
         return send_from_directory(str(DASHBOARD_DIR), "index.html")
-    return "<h2>SmartDesk OS API running</h2>", 200
+    return "<h2>SmartDesk OS API running — open /status to verify</h2>", 200
+
+@app.route("/<path:filename>")
+def serve_static(filename):
+    if DASHBOARD_DIR.exists():
+        return send_from_directory(str(DASHBOARD_DIR), filename)
+    return err("Not found", 404)
+
+# ── UDP discovery ─────────────────────────────────────────────────────────────
 
 def _discovery_listener():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("", DISCOVERY_PORT))
-    while True:
-        try:
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("", DISCOVERY_PORT))
+        print(f"[API] Discovery listener on UDP:{DISCOVERY_PORT}")
+        while True:
             data, addr = sock.recvfrom(1024)
             if data.decode().strip() == "SMARTDESK_DISCOVER":
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,20 +108,39 @@ def _discovery_listener():
                 local_ip = s.getsockname()[0]
                 s.close()
                 sock.sendto(f"SMARTDESK_HERE:{local_ip}".encode(), addr)
-        except Exception as e:
-            print(f"[API] Discovery error: {e}")
+                print(f"[API] Discovery response sent to {addr[0]}")
+    except Exception as e:
+        print(f"[API] Discovery listener error: {e}")
+
+# ── Boot ──────────────────────────────────────────────────────────────────────
 
 def main():
     global sensors, session, camera, behavioral
-    print("SmartDesk OS — MPU Stack Starting")
+
+    print("=" * 50)
+    print("  SmartDesk OS — MPU Stack Starting")
+    print("=" * 50)
+
+    print("[BOOT] Initializing sensor manager...")
     sensors = SensorManager()
+
+    print("[BOOT] Initializing session engine...")
     session = SessionEngine()
+
+    print("[BOOT] Initializing behavioral engine...")
     behavioral = BehavioralEngine()
     behavioral.start()
+
+    print("[BOOT] Initializing camera inference...")
     camera = CameraInference(session, sensors)
     camera.start()
+
     threading.Thread(target=_discovery_listener, daemon=True).start()
-    print(f"Dashboard: http://0.0.0.0:{API_PORT}")
+
+    print(f"\n[BOOT] All systems nominal")
+    print(f"[BOOT] Dashboard : http://localhost:{API_PORT}")
+    print(f"[BOOT] API status: http://localhost:{API_PORT}/status\n")
+
     app.run(host="0.0.0.0", port=API_PORT, debug=False, use_reloader=False)
 
 if __name__ == "__main__":

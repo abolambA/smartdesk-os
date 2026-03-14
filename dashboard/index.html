@@ -6,451 +6,106 @@
 <title>SmartDesk OS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  /* ── Reset & base ─────────────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg0:        #080B0F;
-    --bg1:        #0E1318;
-    --bg2:        #151C24;
-    --bg3:        #1E2832;
-    --border:     #1E2832;
-    --border-hi:  #2D3F52;
-    --accent:     #00D4FF;
-    --accent-dim: #0099BB;
-    --focused:    #00FF88;
-    --distracted: #FF6B35;
-    --absent:     #6B7A8D;
-    --warning:    #FFB800;
-    --text-1:     #EDF2F7;
-    --text-2:     #8A9BB0;
-    --text-3:     #4A5568;
-    --font-mono:  'Space Mono', 'Courier New', monospace;
-    --font-sans:  'Space Grotesk', 'Segoe UI', sans-serif;
-    --radius:     12px;
-    --radius-sm:  8px;
+    --bg0:#080B0F; --bg1:#0E1318; --bg2:#151C24; --bg3:#1E2832;
+    --border:#1E2832; --border-hi:#2D3F52;
+    --accent:#00D4FF; --focused:#00FF88; --distracted:#FF6B35; --absent:#6B7A8D; --warning:#FFB800;
+    --text-1:#EDF2F7; --text-2:#8A9BB0; --text-3:#4A5568;
+    --font-mono:'Space Mono','Courier New',monospace;
+    --font-sans:'Space Grotesk','Segoe UI',sans-serif;
+    --radius:12px; --radius-sm:8px;
   }
-
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-
-  html, body { height: 100%; }
-
-  body {
-    background: var(--bg0);
-    color: var(--text-1);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-
-  /* ── Layout ───────────────────────────────────────────────────────────── */
-  .shell {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    grid-template-rows: 56px 1fr;
-    min-height: 100vh;
-  }
-
-  /* ── Top bar ──────────────────────────────────────────────────────────── */
-  .topbar {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    background: var(--bg1);
-    border-bottom: 1px solid var(--border);
-    gap: 16px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .topbar-logo {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .topbar-sep { flex: 1; }
-
-  .connection-dot {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .connection-dot:hover { opacity: 0.8; }
-  .dot-circle {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-  .connected    { color: var(--focused);    border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.08); }
-  .disconnected { color: var(--absent);     border-color: rgba(107,122,141,0.3); background: rgba(107,122,141,0.08); }
-  .connecting   { color: var(--warning);    border-color: rgba(255,184,0,0.3); background: rgba(255,184,0,0.08); }
-
-  .topbar-time {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-3);
-  }
-
-  /* ── Sidebar ──────────────────────────────────────────────────────────── */
-  .sidebar {
-    background: var(--bg1);
-    border-right: 1px solid var(--border);
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
-    overflow-y: auto;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-3);
-    cursor: pointer;
-    border-radius: 0;
-    transition: all 0.15s;
-    border-left: 2px solid transparent;
-    user-select: none;
-  }
-  .nav-item:hover  { color: var(--text-2); background: var(--bg2); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,255,0.06); }
-  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-
-  .nav-section-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: var(--text-3);
-    letter-spacing: 1.5px;
-    padding: 16px 20px 6px;
-    text-transform: uppercase;
-  }
-
-  /* ── Main content ─────────────────────────────────────────────────────── */
-  .main {
-    padding: 28px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  /* ── Pages ────────────────────────────────────────────────────────────── */
-  .page { display: none; flex-direction: column; gap: 20px; }
-  .page.active { display: flex; }
-
-  /* ── Page header ──────────────────────────────────────────────────────── */
-  .page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-  .page-title {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  .page-subtitle { font-size: 13px; color: var(--text-2); }
-
-  /* ── Cards ────────────────────────────────────────────────────────────── */
-  .card {
-    background: var(--bg1);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .card-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: var(--text-3);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  /* ── Grid layouts ─────────────────────────────────────────────────────── */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-
-  /* ── Focus ring ───────────────────────────────────────────────────────── */
-  .focus-hero {
-    display: flex;
-    align-items: center;
-    gap: 32px;
-  }
-  .ring-wrap {
-    position: relative;
-    width: 180px;
-    height: 180px;
-    flex-shrink: 0;
-  }
-  .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-track { fill: none; stroke: rgba(0,212,255,0.1); stroke-width: 8; }
-  .ring-progress {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 8;
-    stroke-linecap: round;
-    stroke-dasharray: 502;
-    stroke-dashoffset: 502;
-    transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
-    filter: drop-shadow(0 0 6px var(--accent));
-  }
-  .ring-center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .ring-pct {
-    font-family: var(--font-mono);
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -2px;
-  }
-  .ring-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 2px;
-    margin-top: 4px;
-    text-transform: uppercase;
-  }
-
-  /* ── Stat tiles ───────────────────────────────────────────────────────── */
-  .stat-tile {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-  }
-  .stat-tile-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: var(--text-3);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .stat-tile-value {
-    font-family: var(--font-mono);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -1px;
-    line-height: 1;
-  }
-
-  /* ── Focus state pillbar ─────────────────────────────────────────────── */
-  .state-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1px solid;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-  .state-focused    { color: var(--focused);    border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.08); }
-  .state-distracted { color: var(--distracted); border-color: rgba(255,107,53,0.3); background: rgba(255,107,53,0.08); }
-  .state-absent     { color: var(--absent);     border-color: rgba(107,122,141,0.3); background: rgba(107,122,141,0.08); }
-
-  /* ── Session progress bar ─────────────────────────────────────────────── */
-  .session-bar {
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-    background: var(--bg3);
-    display: flex;
-  }
-  .bar-focused    { background: var(--focused); }
-  .bar-distracted { background: var(--distracted); }
-  .bar-absent     { background: rgba(107,122,141,0.4); }
-
-  /* ── Sensor chips ─────────────────────────────────────────────────────── */
-  .sensor-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .sensor-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    color: var(--text-2);
-  }
-  .sensor-chip span { font-family: var(--font-mono); color: var(--accent); font-size: 12px; }
-
-  /* ── Session control buttons ─────────────────────────────────────────── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.15s;
-    background: transparent;
-    text-transform: uppercase;
-  }
-  .btn:hover { opacity: 0.8; transform: translateY(-1px); }
-  .btn:active { transform: translateY(0); }
-  .btn-start  { color: var(--accent);     border-color: rgba(0,212,255,0.4); background: rgba(0,212,255,0.08); }
-  .btn-stop   { color: var(--distracted); border-color: rgba(255,107,53,0.4); background: rgba(255,107,53,0.08); }
-  .btn-camera { color: var(--focused);    border-color: rgba(0,255,136,0.4); background: rgba(0,255,136,0.08); }
-  .btn-camera.off { color: var(--absent); border-color: rgba(107,122,141,0.4); background: transparent; }
-
-  /* ── Distraction log ─────────────────────────────────────────────────── */
-  .event-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
-  .event-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: var(--bg2);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-  }
-  .event-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); min-width: 60px; }
-  .event-type { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
-  .type-distraction { color: var(--distracted); }
-  .type-phone_pickup { color: var(--warning); }
-  .type-absence { color: var(--absent); }
-  .type-posture_nudge { color: var(--accent); }
-
-  /* ── Burnout card ────────────────────────────────────────────────────── */
-  .burnout-number {
-    font-family: var(--font-mono);
-    font-size: 64px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -4px;
-  }
-  .burnout-bar { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; margin: 12px 0; }
-  .burnout-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-
-  /* ── Weekly chart ─────────────────────────────────────────────────────── */
-  .chart-wrap { position: relative; height: 160px; }
-
-  /* ── Peak hours heatmap ──────────────────────────────────────────────── */
-  .heatmap {
-    display: flex;
-    gap: 3px;
-    align-items: flex-end;
-    height: 60px;
-  }
-  .heat-bar {
-    flex: 1;
-    border-radius: 2px;
-    transition: height 0.6s ease, background 0.4s ease;
-    min-height: 4px;
-    cursor: default;
-  }
-  .heat-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px;
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: var(--text-3);
-  }
-
-  /* ── Sessions list ────────────────────────────────────────────────────── */
-  .session-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .session-card:hover { border-color: var(--border-hi); }
-  .session-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .session-score-badge {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .session-meta { flex: 1; }
-  .session-date { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-  .session-dur  { font-size: 12px; color: var(--text-2); }
-  .session-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-  .session-stat  { font-family: var(--font-mono); font-size: 9px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
-
-  /* ── Live chart ───────────────────────────────────────────────────────── */
-  .live-chart-wrap { position: relative; height: 120px; }
-
-  /* ── Empty state ──────────────────────────────────────────────────────── */
-  .empty { text-align: center; padding: 40px; color: var(--text-3); }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; }
-
-  /* ── Scrollbar ────────────────────────────────────────────────────────── */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
-
-  /* ── Responsive ───────────────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .shell { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  }
+  html,body{height:100%;}
+  body{background:var(--bg0);color:var(--text-1);font-family:var(--font-sans);font-size:14px;line-height:1.6;min-height:100vh;}
+  .shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;min-height:100vh;}
+  .topbar{grid-column:1/-1;display:flex;align-items:center;padding:0 24px;background:var(--bg1);border-bottom:1px solid var(--border);gap:16px;position:sticky;top:0;z-index:100;}
+  .topbar-logo{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+  .topbar-sep{flex:1;}
+  .connection-dot{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;border:1px solid;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:opacity 0.2s;}
+  .connection-dot:hover{opacity:0.8;}
+  .dot-circle{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .connected{color:var(--focused);border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.08);}
+  .disconnected{color:var(--absent);border-color:rgba(107,122,141,0.3);background:rgba(107,122,141,0.08);}
+  .connecting{color:var(--warning);border-color:rgba(255,184,0,0.3);background:rgba(255,184,0,0.08);}
+  .topbar-time{font-family:var(--font-mono);font-size:12px;color:var(--text-3);}
+  .sidebar{background:var(--bg1);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;gap:2px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-left:2px solid transparent;transition:all 0.15s;user-select:none;}
+  .nav-item:hover{color:var(--text-2);background:var(--bg2);}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,212,255,0.06);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .nav-section-label{font-family:var(--font-mono);font-size:9px;color:var(--text-3);letter-spacing:1.5px;padding:16px 20px 6px;text-transform:uppercase;}
+  .main{padding:28px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+  .page{display:none;flex-direction:column;gap:20px;}
+  .page.active{display:flex;}
+  .page-header{display:flex;align-items:flex-end;justify-content:space-between;}
+  .page-title{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  .page-subtitle{font-size:13px;color:var(--text-2);}
+  .card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .card-label{font-family:var(--font-mono);font-size:9px;color:var(--text-3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .focus-hero{display:flex;align-items:center;gap:32px;}
+  .ring-wrap{position:relative;width:180px;height:180px;flex-shrink:0;}
+  .ring-svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:rgba(0,212,255,0.1);stroke-width:8;}
+  .ring-progress{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;stroke-dasharray:502;stroke-dashoffset:502;transition:stroke-dashoffset 0.8s ease,stroke 0.4s ease;}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-pct{font-family:var(--font-mono);font-size:32px;font-weight:700;line-height:1;letter-spacing:-2px;}
+  .ring-label{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;margin-top:4px;text-transform:uppercase;}
+  .stat-tile{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
+  .stat-tile-label{font-family:var(--font-mono);font-size:9px;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+  .stat-tile-value{font-family:var(--font-mono);font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1;}
+  .state-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;border:1px solid;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+  .state-focused{color:var(--focused);border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.08);}
+  .state-distracted{color:var(--distracted);border-color:rgba(255,107,53,0.3);background:rgba(255,107,53,0.08);}
+  .state-absent{color:var(--absent);border-color:rgba(107,122,141,0.3);background:rgba(107,122,141,0.08);}
+  .session-bar{height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);display:flex;}
+  .bar-focused{background:var(--focused);}
+  .bar-distracted{background:var(--distracted);}
+  .bar-absent{background:rgba(107,122,141,0.4);}
+  .sensor-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .sensor-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-2);}
+  .sensor-chip span{font-family:var(--font-mono);color:var(--accent);font-size:12px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--radius-sm);border:1px solid;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.15s;background:transparent;text-transform:uppercase;}
+  .btn:hover{opacity:0.8;transform:translateY(-1px);}
+  .btn-start{color:var(--accent);border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.08);}
+  .btn-stop{color:var(--distracted);border-color:rgba(255,107,53,0.4);background:rgba(255,107,53,0.08);}
+  .btn-camera{color:var(--focused);border-color:rgba(0,255,136,0.4);background:rgba(0,255,136,0.08);}
+  .btn-camera.off{color:var(--absent);border-color:rgba(107,122,141,0.4);background:transparent;}
+  .event-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;}
+  .event-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--radius-sm);font-size:12px;}
+  .event-time{font-family:var(--font-mono);font-size:10px;color:var(--text-3);min-width:60px;}
+  .event-type{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:0.5px;}
+  .type-distraction{color:var(--distracted);}
+  .type-phone_pickup{color:var(--warning);}
+  .type-absence{color:var(--absent);}
+  .type-posture_nudge{color:var(--accent);}
+  .burnout-number{font-family:var(--font-mono);font-size:64px;font-weight:700;line-height:1;letter-spacing:-4px;}
+  .burnout-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin:12px 0;}
+  .burnout-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+  .chart-wrap{position:relative;height:160px;}
+  .heatmap{display:flex;gap:3px;align-items:flex-end;height:60px;}
+  .heat-bar{flex:1;border-radius:2px;transition:height 0.6s ease,background 0.4s ease;min-height:4px;}
+  .heat-labels{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--font-mono);font-size:9px;color:var(--text-3);}
+  .session-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;transition:border-color 0.15s;margin-bottom:10px;}
+  .session-card:hover{border-color:var(--border-hi);}
+  .session-card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .session-score-badge{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;font-weight:700;flex-shrink:0;}
+  .session-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+  .session-stat{font-family:var(--font-mono);font-size:9px;color:var(--text-3);display:flex;align-items:center;gap:4px;}
+  .empty{text-align:center;padding:40px;color:var(--text-3);}
+  .empty-icon{font-size:40px;margin-bottom:12px;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px;}
+  @media(max-width:768px){.shell{grid-template-columns:1fr;}.sidebar{display:none;}.grid-2,.grid-3{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 <div class="shell">
 
-  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="topbar-logo">SmartDesk OS</div>
     <div class="topbar-sep"></div>
@@ -461,42 +116,28 @@
     </div>
   </header>
 
-  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
   <nav class="sidebar">
     <div class="nav-section-label">Monitor</div>
-    <div class="nav-item active" onclick="showPage('live')" id="nav-live">
-      <span class="nav-icon">◉</span> Live
-    </div>
-    <div class="nav-item" onclick="showPage('sessions')" id="nav-sessions">
-      <span class="nav-icon">◈</span> Sessions
-    </div>
+    <div class="nav-item active" onclick="showPage('live')"     id="nav-live">    <span class="nav-icon">◉</span> Live</div>
+    <div class="nav-item"        onclick="showPage('sessions')" id="nav-sessions"><span class="nav-icon">◈</span> Sessions</div>
     <div class="nav-section-label">Analysis</div>
-    <div class="nav-item" onclick="showPage('insights')" id="nav-insights">
-      <span class="nav-icon">◆</span> Insights
-    </div>
+    <div class="nav-item"        onclick="showPage('insights')" id="nav-insights"><span class="nav-icon">◆</span> Insights</div>
     <div class="nav-section-label">System</div>
-    <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
-      <span class="nav-icon">◎</span> Settings
-    </div>
+    <div class="nav-item"        onclick="showPage('settings')" id="nav-settings"><span class="nav-icon">◎</span> Settings</div>
   </nav>
 
-  <!-- ── Main ────────────────────────────────────────────────────────────── -->
   <main class="main">
 
-    <!-- ══ LIVE PAGE ════════════════════════════════════════════════════════ -->
+    <!-- LIVE ──────────────────────────────────────────────────────────────── -->
     <section class="page active" id="page-live">
       <div class="page-header">
-        <div>
-          <div class="page-title">Live Monitor</div>
-          <div class="page-subtitle">Real-time focus &amp; workspace state</div>
-        </div>
+        <div><div class="page-title">Live Monitor</div><div class="page-subtitle">Real-time focus &amp; workspace state</div></div>
         <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn btn-camera" id="btn-camera" onclick="toggleCamera()">⬤ Camera ON</button>
+          <button class="btn btn-camera" id="btn-camera"  onclick="toggleCamera()">⬤ Camera ON</button>
           <button class="btn btn-start"  id="btn-session" onclick="toggleSession()">▶ Start Session</button>
         </div>
       </div>
 
-      <!-- Focus hero + stats -->
       <div class="card">
         <div class="focus-hero">
           <div class="ring-wrap">
@@ -505,42 +146,27 @@
               <circle class="ring-progress" cx="90" cy="90" r="80" id="ring-arc"/>
             </svg>
             <div class="ring-center">
-              <div class="ring-pct" id="ring-pct" style="color:var(--accent)">0%</div>
+              <div class="ring-pct"   id="ring-pct"   style="color:var(--accent)">0%</div>
               <div class="ring-label" id="ring-label" style="color:var(--accent)">ABSENT</div>
             </div>
           </div>
-
           <div style="flex:1">
             <div style="margin-bottom:14px">
               <span class="state-pill state-absent" id="posture-pill">⬤ POSTURE: UPRIGHT</span>
             </div>
-
             <div class="grid-2" style="gap:10px">
-              <div class="stat-tile">
-                <div class="stat-tile-label">⬤ Focus score</div>
-                <div class="stat-tile-value" id="stat-score" style="color:var(--focused)">0%</div>
-              </div>
-              <div class="stat-tile">
-                <div class="stat-tile-label">⏱ Duration</div>
-                <div class="stat-tile-value" id="stat-duration" style="color:var(--accent)">0m</div>
-              </div>
-              <div class="stat-tile">
-                <div class="stat-tile-label">⚠ Distractions</div>
-                <div class="stat-tile-value" id="stat-distractions" style="color:var(--distracted)">0</div>
-              </div>
-              <div class="stat-tile">
-                <div class="stat-tile-label">📱 Phone pickups</div>
-                <div class="stat-tile-value" id="stat-pickups" style="color:var(--warning)">0</div>
-              </div>
+              <div class="stat-tile"><div class="stat-tile-label">⬤ Focus score</div><div class="stat-tile-value" id="stat-score"       style="color:var(--focused)">0%</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">⏱ Duration</div>    <div class="stat-tile-value" id="stat-duration"    style="color:var(--accent)">0m</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">⚠ Distractions</div><div class="stat-tile-value" id="stat-distractions" style="color:var(--distracted)">0</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">📱 Phone pickups</div><div class="stat-tile-value" id="stat-pickups"    style="color:var(--warning)">0</div></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Live session bar -->
       <div class="card">
         <div class="card-label">Session timeline</div>
-        <div class="session-bar" id="session-bar" style="margin-bottom:8px">
+        <div class="session-bar" style="margin-bottom:8px">
           <div class="bar-focused"    id="bar-f" style="width:0%"></div>
           <div class="bar-distracted" id="bar-d" style="width:0%"></div>
           <div class="bar-absent"     id="bar-a" style="width:100%"></div>
@@ -552,7 +178,6 @@
         </div>
       </div>
 
-      <!-- Workspace sensors -->
       <div class="card">
         <div class="card-label">Workspace</div>
         <div class="sensor-row">
@@ -563,7 +188,6 @@
         </div>
       </div>
 
-      <!-- Today's distraction log -->
       <div class="card">
         <div class="card-label">Distraction log — today</div>
         <div class="event-list" id="event-list">
@@ -572,48 +196,26 @@
       </div>
     </section>
 
-    <!-- ══ SESSIONS PAGE ════════════════════════════════════════════════════ -->
+    <!-- SESSIONS ──────────────────────────────────────────────────────────── -->
     <section class="page" id="page-sessions">
       <div class="page-header">
-        <div>
-          <div class="page-title">Sessions</div>
-          <div class="page-subtitle">Your work session history</div>
-        </div>
+        <div><div class="page-title">Sessions</div><div class="page-subtitle">Your work session history</div></div>
       </div>
-
-      <!-- Summary row -->
       <div class="card">
         <div class="grid-3" style="text-align:center">
-          <div>
-            <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--focused)" id="sum-focused">0h</div>
-            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Total focused</div>
-          </div>
-          <div>
-            <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--accent)" id="sum-avg">0%</div>
-            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Avg focus score</div>
-          </div>
-          <div>
-            <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--warning)" id="sum-pickups">0</div>
-            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Phone pickups</div>
-          </div>
+          <div><div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--focused)"    id="sum-focused">0h</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Total focused</div></div>
+          <div><div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--accent)"     id="sum-avg">0%</div>    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Avg focus score</div></div>
+          <div><div style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--warning)"    id="sum-pickups">0</div>  <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-3);margin-top:4px">Phone pickups</div></div>
         </div>
       </div>
-
-      <div id="sessions-list">
-        <div class="empty"><div class="empty-icon">◈</div>No sessions recorded yet</div>
-      </div>
+      <div id="sessions-list"><div class="empty"><div class="empty-icon">◈</div>No sessions recorded yet</div></div>
     </section>
 
-    <!-- ══ INSIGHTS PAGE ════════════════════════════════════════════════════ -->
+    <!-- INSIGHTS ──────────────────────────────────────────────────────────── -->
     <section class="page" id="page-insights">
       <div class="page-header">
-        <div>
-          <div class="page-title">Insights</div>
-          <div class="page-subtitle">Your behavioral patterns</div>
-        </div>
+        <div><div class="page-title">Insights</div><div class="page-subtitle">Your behavioral patterns</div></div>
       </div>
-
-      <!-- Burnout risk + adaptive break -->
       <div class="grid-2">
         <div class="card">
           <div class="card-label">Burnout risk</div>
@@ -624,9 +226,8 @@
             <div class="state-pill state-focused" id="burnout-badge">LOW RISK</div>
           </div>
           <div class="burnout-bar"><div class="burnout-fill" id="burnout-fill" style="width:0%;background:var(--focused)"></div></div>
-          <div style="font-size:13px;color:var(--text-2)" id="burnout-msg">You're in great shape. Keep up the consistent work patterns.</div>
+          <div style="font-size:13px;color:var(--text-2)" id="burnout-msg">You're in great shape.</div>
         </div>
-
         <div class="card">
           <div class="card-label">Adaptive break timing</div>
           <div style="display:flex;align-items:center;gap:16px">
@@ -639,25 +240,15 @@
           </div>
         </div>
       </div>
-
-      <!-- Weekly chart -->
       <div class="card">
         <div class="card-label">7-day focus trend</div>
-        <div class="chart-wrap">
-          <canvas id="weekly-chart"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="weekly-chart"></canvas></div>
       </div>
-
-      <!-- Peak hours -->
       <div class="card">
         <div class="card-label">Peak focus hours</div>
         <div class="heatmap" id="heatmap"></div>
-        <div class="heat-labels">
-          <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
-        </div>
+        <div class="heat-labels"><span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span></div>
       </div>
-
-      <!-- Phone pickups this week -->
       <div class="card" style="border-color:rgba(255,184,0,0.3)">
         <div style="display:flex;align-items:center;gap:16px">
           <div style="width:56px;height:56px;border-radius:14px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📱</div>
@@ -670,38 +261,30 @@
       </div>
     </section>
 
-    <!-- ══ SETTINGS PAGE ════════════════════════════════════════════════════ -->
+    <!-- SETTINGS ──────────────────────────────────────────────────────────── -->
     <section class="page" id="page-settings">
       <div class="page-header">
-        <div>
-          <div class="page-title">Settings</div>
-          <div class="page-subtitle">Device &amp; dashboard configuration</div>
-        </div>
+        <div><div class="page-title">Settings</div><div class="page-subtitle">Device &amp; dashboard configuration</div></div>
       </div>
-
       <div class="card">
         <div class="card-label">Device connection</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="ip-input" placeholder="192.168.1.100"
-            style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text-1);font-family:var(--font-mono);font-size:13px;flex:1;min-width:180px;outline:none">
+          <input type="text" id="ip-input" placeholder="192.168.1.100:8080"
+            style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text-1);font-family:var(--font-mono);font-size:13px;flex:1;min-width:200px;outline:none">
           <button class="btn btn-start" onclick="connectToIp()">▶ Connect</button>
-          <button class="btn" style="color:var(--text-2);border-color:var(--border)" onclick="setIp('localhost')">Localhost</button>
+          <button class="btn" style="color:var(--text-2);border-color:var(--border)" onclick="setIp('localhost:8080')">Localhost</button>
         </div>
-        <div style="font-size:12px;color:var(--text-3);margin-top:10px">
-          Current target: <span style="font-family:var(--font-mono);color:var(--accent)" id="current-ip">localhost:5000</span>
-        </div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:10px">Current: <span style="font-family:var(--font-mono);color:var(--accent)" id="current-ip">localhost:8080</span></div>
       </div>
-
       <div class="card">
         <div class="card-label">Refresh interval</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn" id="ri-1"  onclick="setRefresh(1000)"  style="color:var(--text-2);border-color:var(--border)">1s</button>
-          <button class="btn btn-start" id="ri-2" onclick="setRefresh(2000)">2s</button>
+          <button class="btn btn-start"  id="ri-2"  onclick="setRefresh(2000)">2s</button>
           <button class="btn" id="ri-5"  onclick="setRefresh(5000)"  style="color:var(--text-2);border-color:var(--border)">5s</button>
           <button class="btn" id="ri-10" onclick="setRefresh(10000)" style="color:var(--text-2);border-color:var(--border)">10s</button>
         </div>
       </div>
-
       <div class="card">
         <div class="card-label">About</div>
         <div style="font-size:13px;color:var(--text-2);line-height:2">
@@ -716,24 +299,20 @@
 </div>
 
 <script>
-// ── Config ────────────────────────────────────────────────────────────────────
-let BASE_URL     = 'http://localhost:5000';
-let REFRESH_MS   = 2000;
-let pollTimer    = null;
+let BASE_URL   = 'http://localhost:8080';
+let REFRESH_MS = 2000;
+let pollTimer  = null;
 let sessionActive = false;
 let cameraActive  = true;
 let weeklyChart   = null;
 
-// ── Clock ─────────────────────────────────────────────────────────────────────
 function updateClock() {
-  const now = new Date();
+  const n = new Date();
   document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+    n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
 }
-setInterval(updateClock, 1000);
-updateClock();
+setInterval(updateClock, 1000); updateClock();
 
-// ── Navigation ────────────────────────────────────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -743,12 +322,9 @@ function showPage(name) {
   if (name === 'insights') loadInsights();
 }
 
-// ── Connection ────────────────────────────────────────────────────────────────
-function setConnectionState(state) {
-  const dot   = document.getElementById('conn-dot');
-  const label = document.getElementById('conn-label');
-  dot.className = 'connection-dot ' + state;
-  label.textContent = state.toUpperCase();
+function setConnectionState(s) {
+  document.getElementById('conn-dot').className = 'connection-dot ' + s;
+  document.getElementById('conn-label').textContent = s.toUpperCase();
 }
 
 function attemptConnect() {
@@ -756,23 +332,21 @@ function attemptConnect() {
   fetch(BASE_URL + '/status')
     .then(r => r.json())
     .then(() => { setConnectionState('connected'); startPolling(); })
-    .catch(() => { setConnectionState('disconnected'); });
+    .catch(() => setConnectionState('disconnected'));
 }
 
 function connectToIp() {
   const ip = document.getElementById('ip-input').value.trim();
-  if (!ip) return;
-  setIp(ip);
+  if (ip) setIp(ip);
 }
 
 function setIp(ip) {
-  BASE_URL = 'http://' + ip + (ip.includes(':') ? '' : ':5000');
-  document.getElementById('current-ip').textContent = ip + ':5000';
+  BASE_URL = 'http://' + ip;
+  document.getElementById('current-ip').textContent = ip;
   document.getElementById('ip-input').value = ip;
   attemptConnect();
 }
 
-// ── Polling ───────────────────────────────────────────────────────────────────
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(pollStatus, REFRESH_MS);
@@ -783,9 +357,9 @@ function setRefresh(ms) {
   REFRESH_MS = ms;
   ['1','2','5','10'].forEach(v => {
     const b = document.getElementById('ri-' + v);
-    const isSelected = parseInt(v) * 1000 === ms;
-    b.className = 'btn ' + (isSelected ? 'btn-start' : '');
-    if (!isSelected) b.style.cssText = 'color:var(--text-2);border-color:var(--border)';
+    const sel = parseInt(v) * 1000 === ms;
+    b.className = 'btn ' + (sel ? 'btn-start' : '');
+    if (!sel) b.style.cssText = 'color:var(--text-2);border-color:var(--border)';
     else b.style.cssText = '';
   });
   if (pollTimer) startPolling();
@@ -793,73 +367,65 @@ function setRefresh(ms) {
 
 async function pollStatus() {
   try {
-    const [statusRes, sessionRes] = await Promise.all([
+    const [sRes, sessRes] = await Promise.all([
       fetch(BASE_URL + '/status'),
       fetch(BASE_URL + '/session'),
     ]);
-    const status  = await statusRes.json();
-    const session = await sessionRes.json();
+    const status  = await sRes.json();
+    const session = await sessRes.json();
     setConnectionState('connected');
     updateLivePage(status, session);
-  } catch (e) {
-    setConnectionState('disconnected');
-  }
+  } catch(e) { setConnectionState('disconnected'); }
 }
 
-// ── Live page update ──────────────────────────────────────────────────────────
+function stateColor(s) {
+  return s === 'focused' ? '#00FF88' : s === 'distracted' ? '#FF6B35' : '#6B7A8D';
+}
+
 function updateLivePage(status, session) {
-  // Focus ring
-  const focusState = status.focus_state  || 'absent';
+  const focusState = status.focus_state || 'absent';
   const confidence = status.focus_confidence || 0;
   const color      = stateColor(focusState);
   const pct        = Math.round(confidence * 100);
-  const circumference = 2 * Math.PI * 80; // r=80
+  const circ       = 2 * Math.PI * 80;
 
   const arc = document.getElementById('ring-arc');
-  arc.style.strokeDasharray  = circumference;
-  arc.style.strokeDashoffset = circumference * (1 - confidence);
+  arc.style.strokeDasharray  = circ;
+  arc.style.strokeDashoffset = circ * (1 - confidence);
   arc.style.stroke           = color;
   arc.style.filter           = `drop-shadow(0 0 8px ${color})`;
-
   document.getElementById('ring-pct').textContent   = pct + '%';
   document.getElementById('ring-pct').style.color   = color;
   document.getElementById('ring-label').textContent = focusState.toUpperCase();
   document.getElementById('ring-label').style.color = color;
 
-  // Posture pill
   const posture = status.posture_state || 'upright';
   const pPill   = document.getElementById('posture-pill');
-  pPill.textContent  = '⬤ POSTURE: ' + posture.toUpperCase();
-  pPill.className    = 'state-pill state-' + (posture === 'upright' ? 'focused' : posture === 'slouching' ? 'distracted' : 'absent');
+  pPill.textContent = '⬤ POSTURE: ' + posture.toUpperCase();
+  pPill.className   = 'state-pill state-' + (posture === 'upright' ? 'focused' : posture === 'slouching' ? 'distracted' : 'absent');
 
-  // Session stats
-  const score      = session.focus_score || 0;
-  const dur        = session.duration_seconds || 0;
-  const h          = Math.floor(dur / 3600);
-  const m          = Math.floor((dur % 3600) / 60);
-  const durLabel   = h > 0 ? `${h}h ${m}m` : `${m}m`;
-
+  const score  = session.focus_score || 0;
+  const dur    = session.duration_seconds || 0;
+  const h      = Math.floor(dur / 3600);
+  const m      = Math.floor((dur % 3600) / 60);
   document.getElementById('stat-score').textContent        = Math.round(score * 100) + '%';
-  document.getElementById('stat-duration').textContent     = durLabel;
+  document.getElementById('stat-duration').textContent     = h > 0 ? `${h}h ${m}m` : `${m}m`;
   document.getElementById('stat-distractions').textContent = session.distraction_count  || 0;
   document.getElementById('stat-pickups').textContent      = session.phone_pickup_count || 0;
 
-  // Session bar
-  const total = (session.focused_seconds || 0) + (session.distracted_seconds || 0) + (session.absent_seconds || 0);
+  const total = (session.focused_seconds||0) + (session.distracted_seconds||0) + (session.absent_seconds||0);
   if (total > 0) {
     document.getElementById('bar-f').style.width = ((session.focused_seconds    / total) * 100).toFixed(1) + '%';
     document.getElementById('bar-d').style.width = ((session.distracted_seconds / total) * 100).toFixed(1) + '%';
     document.getElementById('bar-a').style.width = ((session.absent_seconds     / total) * 100).toFixed(1) + '%';
   }
 
-  // Sensors
   const sen = status.sensors || {};
-  document.getElementById('sen-light').textContent = (sen.light_lux     != null ? Math.round(sen.light_lux)              : '--') + ' lux';
-  document.getElementById('sen-temp').textContent  = (sen.temperature_c != null ? sen.temperature_c.toFixed(1)           : '--') + '°C';
-  document.getElementById('sen-humid').textContent = (sen.humidity      != null ? Math.round(sen.humidity)               : '--') + '%';
-  document.getElementById('sen-sound').textContent = (sen.sound_db      != null ? Math.round(sen.sound_db)               : '--') + ' dB';
+  document.getElementById('sen-light').textContent = (sen.light_lux     != null ? Math.round(sen.light_lux)    : '--') + ' lux';
+  document.getElementById('sen-temp').textContent  = (sen.temperature_c != null ? sen.temperature_c.toFixed(1) : '--') + '°C';
+  document.getElementById('sen-humid').textContent = (sen.humidity      != null ? Math.round(sen.humidity)     : '--') + '%';
+  document.getElementById('sen-sound').textContent = (sen.sound_db      != null ? Math.round(sen.sound_db)     : '--') + ' dB';
 
-  // Session / camera button states
   sessionActive = status.session_active;
   cameraActive  = status.camera_active;
   const sb = document.getElementById('btn-session');
@@ -869,204 +435,104 @@ function updateLivePage(status, session) {
   cb.textContent = cameraActive ? '⬤ Camera ON' : '⬤ Camera OFF';
   cb.className   = 'btn btn-camera' + (cameraActive ? '' : ' off');
 
-  // Load today's events
   if (session.id) loadEvents(session.id);
 }
 
-async function loadEvents(sessionId) {
+async function loadEvents(sid) {
   try {
-    const res    = await fetch(BASE_URL + '/history/' + sessionId + '/events');
+    const res    = await fetch(BASE_URL + '/history/' + sid + '/events');
     const events = await res.json();
     const list   = document.getElementById('event-list');
-    if (!events.length) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">◎</div>No events yet</div>';
-      return;
-    }
+    if (!events.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">◎</div>No events yet</div>'; return; }
     list.innerHTML = events.slice(-20).reverse().map(e => {
       const t = new Date(e.timestamp);
-      const timeStr = t.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
-      return `<div class="event-row">
-        <span class="event-time">${timeStr}</span>
-        <span class="event-type type-${e.type}">${e.type.replace('_',' ').toUpperCase()}</span>
-        <span style="font-size:11px;color:var(--text-3)">${e.value || ''}</span>
-      </div>`;
+      const ts = t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      return `<div class="event-row"><span class="event-time">${ts}</span><span class="event-type type-${e.type}">${e.type.replace('_',' ').toUpperCase()}</span><span style="font-size:11px;color:var(--text-3)">${e.value||''}</span></div>`;
     }).join('');
   } catch(e) {}
 }
 
-// ── Sessions page ─────────────────────────────────────────────────────────────
 async function loadSessions() {
   try {
-    const res      = await fetch(BASE_URL + '/history?limit=30');
-    const sessions = await res.json();
-
-    if (!sessions.length) {
-      document.getElementById('sessions-list').innerHTML =
-        '<div class="empty"><div class="empty-icon">◈</div>No sessions recorded yet</div>';
-      return;
-    }
-
-    // Summary
-    const totalFocused = sessions.reduce((a,s) => a + (s.focused_seconds || 0), 0);
-    const avgScore     = sessions.reduce((a,s) => a + (s.focus_score || 0), 0) / sessions.length;
-    const totalPickups = sessions.reduce((a,s) => a + (s.phone_pickup_count || 0), 0);
-    document.getElementById('sum-focused').textContent = (totalFocused / 3600).toFixed(1) + 'h';
-    document.getElementById('sum-avg').textContent     = Math.round(avgScore * 100) + '%';
-    document.getElementById('sum-pickups').textContent = totalPickups;
-
+    const sessions = await fetch(BASE_URL + '/history?limit=30').then(r => r.json());
+    if (!sessions.length) { document.getElementById('sessions-list').innerHTML = '<div class="empty"><div class="empty-icon">◈</div>No sessions recorded yet</div>'; return; }
+    const tf = sessions.reduce((a,s) => a + (s.focused_seconds||0), 0);
+    const av = sessions.reduce((a,s) => a + (s.focus_score||0), 0) / sessions.length;
+    const tp = sessions.reduce((a,s) => a + (s.phone_pickup_count||0), 0);
+    document.getElementById('sum-focused').textContent = (tf / 3600).toFixed(1) + 'h';
+    document.getElementById('sum-avg').textContent     = Math.round(av * 100) + '%';
+    document.getElementById('sum-pickups').textContent = tp;
     document.getElementById('sessions-list').innerHTML = sessions.map(s => {
-      const score    = s.focus_score || 0;
-      const color    = score >= 0.8 ? 'var(--focused)' : score >= 0.6 ? 'var(--warning)' : 'var(--distracted)';
-      const start    = new Date(s.start_time);
-      const now      = new Date();
-      const isToday  = start.toDateString() === now.toDateString();
-      const isYest   = start.toDateString() === new Date(now - 86400000).toDateString();
-      const dateStr  = isToday ? 'Today' : isYest ? 'Yesterday' : start.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
-      const timeStr  = start.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false});
-      const total    = (s.focused_seconds||0) + (s.distracted_seconds||0) + (s.absent_seconds||0);
-      const dh       = Math.floor(total / 3600);
-      const dm       = Math.floor((total % 3600) / 60);
-      const durStr   = dh > 0 ? `${dh}h ${dm}m` : `${dm}m`;
-      const fF       = total ? ((s.focused_seconds    / total) * 100).toFixed(0) : 0;
-      const dF       = total ? ((s.distracted_seconds / total) * 100).toFixed(0) : 0;
-      const aF       = total ? ((s.absent_seconds     / total) * 100).toFixed(0) : 0;
-      return `
-        <div class="session-card" style="margin-bottom:10px">
-          <div class="session-card-header">
-            <div class="session-score-badge" style="background:${color}22;border:1px solid ${color}44;color:${color}">${Math.round(score*100)}</div>
-            <div class="session-meta">
-              <div class="session-date">${dateStr} · ${timeStr}</div>
-              <div class="session-dur">${durStr} session</div>
-            </div>
-          </div>
-          <div class="session-bar" style="margin-bottom:8px">
-            <div class="bar-focused"    style="width:${fF}%"></div>
-            <div class="bar-distracted" style="width:${dF}%"></div>
-            <div class="bar-absent"     style="width:${aF}%"></div>
-          </div>
-          <div class="session-stats">
-            <span class="session-stat" style="color:var(--distracted)">⚠ ${s.distraction_count||0} distractions</span>
-            <span class="session-stat" style="color:var(--warning)">📱 ${s.phone_pickup_count||0} pickups</span>
-            <span class="session-stat" style="color:var(--accent)">◉ ${s.posture_nudge_count||0} nudges</span>
-          </div>
-        </div>`;
+      const sc   = s.focus_score || 0;
+      const col  = sc >= 0.8 ? 'var(--focused)' : sc >= 0.6 ? 'var(--warning)' : 'var(--distracted)';
+      const st   = new Date(s.start_time);
+      const now  = new Date();
+      const dl   = st.toDateString() === now.toDateString() ? 'Today' : st.toDateString() === new Date(now-86400000).toDateString() ? 'Yesterday' : st.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const tl   = st.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+      const tot  = (s.focused_seconds||0) + (s.distracted_seconds||0) + (s.absent_seconds||0);
+      const dh   = Math.floor(tot/3600); const dm = Math.floor((tot%3600)/60);
+      const fF   = tot ? ((s.focused_seconds/tot)*100).toFixed(0) : 0;
+      const dF   = tot ? ((s.distracted_seconds/tot)*100).toFixed(0) : 0;
+      const aF   = tot ? ((s.absent_seconds/tot)*100).toFixed(0) : 0;
+      return `<div class="session-card"><div class="session-card-header"><div class="session-score-badge" style="background:${col}22;border:1px solid ${col}44;color:${col}">${Math.round(sc*100)}</div><div><div style="font-size:14px;font-weight:600;margin-bottom:2px">${dl} · ${tl}</div><div style="font-size:12px;color:var(--text-2)">${dh>0?dh+'h ':''} ${dm}m session</div></div></div><div class="session-bar" style="margin-bottom:8px"><div class="bar-focused" style="width:${fF}%"></div><div class="bar-distracted" style="width:${dF}%"></div><div class="bar-absent" style="width:${aF}%"></div></div><div class="session-stats"><span class="session-stat" style="color:var(--distracted)">⚠ ${s.distraction_count||0} distractions</span><span class="session-stat" style="color:var(--warning)">📱 ${s.phone_pickup_count||0} pickups</span><span class="session-stat" style="color:var(--accent)">◉ ${s.posture_nudge_count||0} nudges</span></div></div>`;
     }).join('');
-  } catch(e) {
-    document.getElementById('sessions-list').innerHTML =
-      '<div class="empty"><div class="empty-icon">◈</div>Could not load sessions</div>';
-  }
+  } catch(e) { document.getElementById('sessions-list').innerHTML = '<div class="empty"><div class="empty-icon">◈</div>Could not load sessions</div>'; }
 }
 
-// ── Insights page ─────────────────────────────────────────────────────────────
 async function loadInsights() {
   try {
-    const res     = await fetch(BASE_URL + '/insights');
-    const ins     = await res.json();
-
-    // Burnout
-    const risk  = ins.burnout_risk_score || 0;
-    const rPct  = Math.round(risk * 100);
-    const rCol  = risk < 0.3 ? 'var(--focused)' : risk < 0.6 ? 'var(--warning)' : 'var(--distracted)';
-    const rLbl  = risk < 0.3 ? 'LOW RISK' : risk < 0.6 ? 'MODERATE' : 'HIGH RISK';
-    const rCls  = risk < 0.3 ? 'state-focused' : risk < 0.6 ? 'state-absent' : 'state-distracted';
-    const rMsg  = risk < 0.3
-      ? "You're in great shape. Keep up the consistent work patterns."
-      : risk < 0.6 ? "Some warning signs detected. Consider scheduling more breaks."
-      : "Multiple burnout indicators active. Rest period strongly recommended.";
+    const ins = await fetch(BASE_URL + '/insights').then(r => r.json());
+    const risk = ins.burnout_risk_score || 0;
+    const rPct = Math.round(risk * 100);
+    const rCol = risk < 0.3 ? 'var(--focused)' : risk < 0.6 ? 'var(--warning)' : 'var(--distracted)';
+    const rCls = risk < 0.3 ? 'state-focused' : risk < 0.6 ? 'state-absent' : 'state-distracted';
     document.getElementById('burnout-num').textContent  = rPct;
     document.getElementById('burnout-num').style.color  = rCol;
     document.getElementById('burnout-fill').style.width = rPct + '%';
     document.getElementById('burnout-fill').style.background = rCol;
-    document.getElementById('burnout-badge').textContent  = rLbl;
-    document.getElementById('burnout-badge').className    = 'state-pill ' + rCls;
-    document.getElementById('burnout-msg').textContent    = rMsg;
+    document.getElementById('burnout-badge').textContent = risk < 0.3 ? 'LOW RISK' : risk < 0.6 ? 'MODERATE' : 'HIGH RISK';
+    document.getElementById('burnout-badge').className  = 'state-pill ' + rCls;
+    document.getElementById('burnout-msg').textContent  = risk < 0.3 ? "You're in great shape. Keep up the consistent work patterns." : risk < 0.6 ? "Some warning signs detected. Consider scheduling more breaks." : "Multiple burnout indicators active. Rest period strongly recommended.";
+    document.getElementById('break-mins').textContent   = ins.adaptive_break_minutes || 25;
 
-    // Adaptive break
-    document.getElementById('break-mins').textContent = ins.adaptive_break_minutes || 25;
-
-    // Weekly chart
     const scores = ins.weekly_scores || Array(7).fill(0);
-    const days   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     if (weeklyChart) weeklyChart.destroy();
     weeklyChart = new Chart(document.getElementById('weekly-chart').getContext('2d'), {
       type: 'bar',
-      data: {
-        labels: days,
-        datasets: [{
-          label: 'Focus score',
-          data: scores.map(s => Math.round(s * 100)),
-          backgroundColor: scores.map((s,i) => {
-            if (i === scores.length - 1) return 'rgba(0,212,255,0.7)';
-            return s >= 0.8 ? 'rgba(0,255,136,0.6)' : s >= 0.6 ? 'rgba(255,184,0,0.6)' : 'rgba(255,107,53,0.6)';
-          }),
-          borderRadius: 4,
-          borderSkipped: false,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+      data: { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{ label: 'Focus score', data: scores.map(s => Math.round(s*100)),
+          backgroundColor: scores.map((s,i) => i===scores.length-1 ? 'rgba(0,212,255,0.7)' : s>=0.8 ? 'rgba(0,255,136,0.6)' : s>=0.6 ? 'rgba(255,184,0,0.6)' : 'rgba(255,107,53,0.6)'),
+          borderRadius: 4, borderSkipped: false }] },
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins: { legend: { display:false } },
         scales: {
-          x: { grid: { color: 'rgba(30,40,50,0.8)' }, ticks: { color: '#4A5568', font: { family: 'Space Mono', size: 10 } } },
-          y: { min: 0, max: 100, grid: { color: 'rgba(30,40,50,0.8)' }, ticks: { color: '#4A5568', font: { family: 'Space Mono', size: 10 }, callback: v => v + '%' } }
+          x: { grid:{color:'rgba(30,40,50,0.8)'}, ticks:{color:'#4A5568',font:{family:'Space Mono',size:10}} },
+          y: { min:0, max:100, grid:{color:'rgba(30,40,50,0.8)'}, ticks:{color:'#4A5568',font:{family:'Space Mono',size:10},callback:v=>v+'%'} }
         }
       }
     });
 
-    // Peak hours heatmap
-    const hours   = ins.peak_hours || Array(24).fill(0);
-    const heatmap = document.getElementById('heatmap');
-    heatmap.innerHTML = hours.map((val, i) => {
-      const h      = Math.max(4, val * 56);
-      const alpha  = 0.15 + val * 0.85;
-      return `<div class="heat-bar" title="${i}:00 — ${Math.round(val*100)}%"
-        style="height:${h}px;background:rgba(0,212,255,${alpha.toFixed(2)})"></div>`;
-    }).join('');
+    const hours = ins.peak_hours || Array(24).fill(0);
+    document.getElementById('heatmap').innerHTML = hours.map((v,i) =>
+      `<div class="heat-bar" title="${i}:00 — ${Math.round(v*100)}%" style="height:${Math.max(4,v*56)}px;background:rgba(0,212,255,${(0.15+v*0.85).toFixed(2)})"></div>`
+    ).join('');
 
-    // Phone pickups
-    const pickups = ins.phone_pickups_this_week || 0;
-    document.getElementById('ins-pickups').textContent     = pickups;
-    document.getElementById('ins-pickups-avg').textContent = (pickups / 7).toFixed(1);
-
-  } catch(e) {
-    console.error('Insights load failed:', e);
-  }
+    const p = ins.phone_pickups_this_week || 0;
+    document.getElementById('ins-pickups').textContent     = p;
+    document.getElementById('ins-pickups-avg').textContent = (p/7).toFixed(1);
+  } catch(e) { console.error('Insights failed:', e); }
 }
 
-// ── Session & camera controls ─────────────────────────────────────────────────
 async function toggleSession() {
-  const endpoint = sessionActive ? '/session/stop' : '/session/start';
-  try {
-    await fetch(BASE_URL + endpoint, {method:'POST'});
-    await pollStatus();
-  } catch(e) {}
+  try { await fetch(BASE_URL + (sessionActive ? '/session/stop' : '/session/start'), {method:'POST'}); await pollStatus(); } catch(e) {}
 }
-
 async function toggleCamera() {
-  try {
-    await fetch(BASE_URL + '/camera/toggle', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({active: !cameraActive})
-    });
-    await pollStatus();
-  } catch(e) {}
+  try { await fetch(BASE_URL + '/camera/toggle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({active:!cameraActive})}); await pollStatus(); } catch(e) {}
 }
 
-// ── Color helpers ─────────────────────────────────────────────────────────────
-function stateColor(state) {
-  return state === 'focused' ? '#00FF88' : state === 'distracted' ? '#FF6B35' : '#6B7A8D';
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-// Build empty heatmap on load
 document.addEventListener('DOMContentLoaded', () => {
-  const hm = document.getElementById('heatmap');
-  hm.innerHTML = Array(24).fill(0).map(() =>
-    `<div class="heat-bar" style="height:4px;background:rgba(0,212,255,0.15)"></div>`
-  ).join('');
-
-  // Auto-connect to localhost
+  document.getElementById('heatmap').innerHTML = Array(24).fill(0).map(() =>
+    `<div class="heat-bar" style="height:4px;background:rgba(0,212,255,0.15)"></div>`).join('');
   attemptConnect();
   startPolling();
 });
