@@ -1,18 +1,16 @@
-# SmartDesk OS — Enclosure Design Reference v4
-# "Desky" character — Baymax-inspired friendly desk robot
-# Material: PLA
-# Privacy switch REMOVED — long press on TTP223 handles camera toggle
-# Insert size confirmed: M3 × 4mm L × 5mm OD → holes sized at 5.2mm diameter
-# Screw sizes: M3×10mm (head-body), M3×6mm (board mount), M2×6mm (display/ring/panel)
+# SmartDesk OS — Enclosure Design Reference v6 FINAL
+# NeoPixel ring: Reland Sun / Adafruit-spec 37mm outer diameter CONFIRMED
+# Insert size: M3 × 4mm L × 5mm OD → holes 5.2mm diameter
+# No privacy switch — long press TTP223 handles camera toggle
 
-## Confirmed Component Dimensions
+## All Confirmed Component Dimensions
 
 | Component                    | Dimensions                           |
 |------------------------------|--------------------------------------|
 | Arduino UNO Q PCB            | 68.85mm × 53.34mm × ~12mm tall       |
 | ST7789 2" display module     | 60mm × 36.5mm × 3.5mm thick          |
 | ST7789 active display area   | 40.8mm × 30.6mm                      |
-| NeoPixel 12-ring             | 37mm outer dia, 23mm inner, 7mm thick|
+| NeoPixel 12-ring (Reland Sun)| 37mm outer dia, 23mm inner, 7mm thick|
 | KY-040 rotary encoder        | 19mm body dia, 6mm shaft, 20mm tall  |
 | TTP223 touch module          | 24mm × 24mm × 3mm                    |
 | DHT22 sensor                 | 15mm × 12mm × 5mm                    |
@@ -23,16 +21,16 @@
 | Relay module                 | 32mm × 26mm × 17mm                   |
 | USB-C port on UNO Q          | 9mm wide × 3.5mm tall                |
 
-## Touch Interaction (no physical switch needed)
-- Single tap: start/stop session
-- Long press 2 seconds: toggle camera on/off (replaces physical privacy switch)
-- Double tap: cycle display mode (alternative to rotary encoder)
+## Touch Interaction
+- Single tap: session start/stop
+- Long press 2 seconds: camera on/off toggle
+- Double tap: cycle display mode
 
-## Screws and Inserts Summary
-- Inserts: M3 × 4mm L × 5mm OD brass heat-set → enclosure holes 5.2mm diameter × 5mm deep
-- M3 × 10mm screws: head-to-body connection (4 screws)
-- M3 × 6mm screws: UNO Q board to standoffs (4 screws)
-- M2 × 6mm screws: display mount, NeoPixel ring, rear panel (12 screws)
+## Screws and Inserts
+- Inserts: M3 × 4mm L × 5mm OD → holes 5.2mm diameter × 5mm deep
+- M3 × 10mm: head-to-body (4 screws)
+- M3 × 6mm: UNO Q board standoffs (4 screws)
+- M2 × 6mm: display, NeoPixel ring, rear panel (12 screws)
 
 ## Measure before printing
 1. Your ST7789 PCB — 60×36.5mm or 58×35mm?
@@ -51,9 +49,9 @@ The enclosure houses all SmartDesk OS electronics inside.
 All dimensions are in millimeters. Wall thickness is 2.5mm throughout unless stated otherwise.
 Print material: PLA.
 The enclosure consists of 4 separate printed pieces: HEAD shell, BODY base, NECK COLLAR, and NEOPIXEL DIFFUSER WINDOW.
-Connections use M3 brass heat-set inserts with OD 5mm. All insert holes are 5.2mm diameter x 5mm deep.
+Connections use M3 brass heat-set inserts OD 5mm. All M3 insert holes are 5.2mm diameter x 5mm deep.
 Head-to-body screws: M3 x 10mm. Board mounting screws: M3 x 6mm. Small component screws: M2 x 6mm.
-There is NO privacy toggle switch — camera is controlled via long press on the capacitive touch sensor.
+No privacy toggle switch — camera is controlled via long press on the capacitive touch sensor.
 
 === COMPONENTS TO FIT INSIDE ===
 Arduino UNO Q PCB: 68.85 x 53.34 x 12mm tall
@@ -77,7 +75,7 @@ Flattened bottom face for mating with body.
 Flattened rear face — 65mm wide flat vertical area for camera mount.
 Wall thickness 2.5mm throughout.
 All exterior surface corners: minimum 8mm fillet radius.
-Smooth organic surface, no flat panels except rear camera area and bottom mating face.
+Smooth organic surface, no flat panels except rear and bottom.
 
 Front face — display window:
 Rectangular cutout 64mm wide x 42mm tall centered on front face.
@@ -91,15 +89,16 @@ Two oval ridges raised 2.5mm above surface.
 Each ridge: 22mm long x 7mm wide, smooth rounded ends.
 Left ridge center: 26mm left of face center, 14mm above display cutout top edge.
 Right ridge center: 26mm right of face center, 14mm above display cutout top edge.
-Both ridges angled 15 degrees inward toward center for expressive character look.
+Both ridges angled 15 degrees inward toward center.
 
 Below display — smile groove:
 Arc groove 2mm deep x 1.5mm wide embossed into surface.
 38mm wide arc centered horizontally, 10mm below display cutout bottom edge.
-Arc curves upward 4mm at its center forming a smile shape.
+Arc curves upward 4mm at center forming smile shape.
 
 Left side of head — NeoPixel ring mount:
 Circular cutout 39mm diameter through the left side wall.
+(37mm ring plus 1mm clearance each side)
 Center of cutout: 32mm back from front face edge, vertically centered on head sphere.
 Behind cutout on interior: cylindrical recess 8mm deep with flat bottom for ring PCB.
 4x M2 mounting holes at 90 degree intervals on 50mm bolt circle centered on recess.
@@ -114,7 +113,7 @@ Encoder body cavity below platform: 20mm diameter x 16mm deep.
 Top of head — character ears:
 LEFT ear: solid hemisphere 20mm base diameter, 9mm tall, 38mm left of center.
 RIGHT ear: solid hemisphere 20mm base diameter, 9mm tall, 38mm right of center.
-Both ears blend smoothly into head surface with tangent-continuous blending.
+Both ears blend smoothly into head surface.
 
 Rear of head — camera slot:
 Rectangular slot 24mm wide x 16mm tall on flat rear face.
@@ -133,7 +132,7 @@ Top outer diameter: 118mm.
 Middle outer diameter: 108mm — pinched at midpoint.
 Bottom outer diameter: 122mm.
 Height: 20mm. Wall thickness: 2mm.
-No fasteners — friction and gravity held, removable.
+No fasteners — friction and gravity held.
 Interior open for wiring passage.
 
 === PIECE 3: BODY BASE ===
@@ -152,7 +151,7 @@ Arduino UNO Q mounting shelf: raised platform 10mm above floor.
 Shelf dimensions: 74mm x 58mm.
 4x M3 mounting standoffs at UNO Q corner hole positions, 8mm tall, M3 insert hole 5.2mm x 5mm deep.
 Shelf centered left-right, 12mm from rear interior wall.
-Left component zone: 40mm wide x 58mm deep x 65mm tall for relay, BH1750, DHT22.
+Left component zone: 45mm wide x 58mm deep x 65mm tall for relay, BH1750, DHT22.
 Wire management channels: 8mm wide x 6mm deep grooves along all interior base walls.
 Interior height clearance: 75mm.
 
@@ -179,7 +178,7 @@ Qwiic JST cutout: 7mm wide x 5mm tall, 36mm up from bottom exterior.
 Rear wall — assembly access panel:
 Rectangular opening: 88mm wide x 60mm tall.
 Centered horizontally, 8mm from bottom.
-1.5mm lip border all around for removable rear panel.
+1.5mm lip border all around.
 4x M2 screw holes in corners of lip, 5mm from each corner.
 
 Body bottom face:
@@ -189,7 +188,7 @@ Pattern centered on bottom, avoiding foot recesses.
 
 Body top rim — mating interface:
 Flat rim 4mm wide around perimeter.
-4x M3 through-holes on 96mm bolt circle for M3 x 10mm screws to pass through into head inserts.
+4x M3 through-holes on 96mm bolt circle for M3 x 10mm screws.
 2x alignment pin receiver holes: 3.8mm diameter x 5mm deep on 80mm bolt circle.
 
 === PIECE 4: NEOPIXEL DIFFUSER WINDOW ===
