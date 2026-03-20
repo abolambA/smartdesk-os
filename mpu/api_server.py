@@ -92,12 +92,10 @@ def serve_static(filename):
         return send_from_directory(str(DASHBOARD_DIR), filename)
     return err("Not found", 404)
 
-# ── Bridge state pusher ───────────────────────────────────────────────────────
-# Runs in background — pushes MPU state to MCU Bridge keys so the
-# display and LED ring always have fresh data without polling from MCU
+# ── Bridge push loop ──────────────────────────────────────────────────────────
 
 def _bridge_push_loop():
-    """Push current state to Bridge every 2 seconds for MCU display."""
+    """Push MPU state to Bridge every 2s. Handle touch events from MCU."""
     try:
         from bridge import Bridge as ArduinoBridge
         bridge = ArduinoBridge()
@@ -114,29 +112,36 @@ def _bridge_push_loop():
                 sess = session.get_current_session()
                 ins  = behavioral.insights if behavioral else {}
 
-                # Push focus/posture state to MCU display
-                bridge.put("focus_state",       cam.get("focus_state", "absent"))
-                bridge.put("posture_state",      cam.get("posture_state", "upright"))
-                bridge.put("focus_score",        str(round(sess.get("focus_score", 0.0), 3)))
-                bridge.put("distraction_count",  str(sess.get("distraction_count", 0)))
-                bridge.put("session_active",     "1" if session.is_active else "0")
-                bridge.put("session_secs",       str(sess.get("duration_seconds", 0)))
-                bridge.put("burnout_risk",       str(round(ins.get("burnout_risk_score", 0.0), 3)))
+                # Push display state to MCU
+                bridge.put("focus_state",      cam.get("focus_state", "absent"))
+                bridge.put("posture_state",     cam.get("posture_state", "upright"))
+                bridge.put("focus_score",       str(round(sess.get("focus_score", 0.0), 3)))
+                bridge.put("distraction_count", str(sess.get("distraction_count", 0)))
+                bridge.put("session_active",    "1" if session.is_active else "0")
+                bridge.put("session_secs",      str(sess.get("duration_seconds", 0)))
+                bridge.put("burnout_risk",      str(round(ins.get("burnout_risk_score", 0.0), 3)))
+                bridge.put("current_time",      datetime.now().strftime("%H:%M"))
 
-                # Push current time for clock mode
-                bridge.put("current_time", datetime.now().strftime("%H:%M"))
-
-                # Check if TTP223 touch button was pressed
-                toggle = bridge.get("touch_session_toggle")
-                if toggle == "1":
+                # ── Handle single tap: session toggle ─────────────────────────
+                if bridge.get("touch_session_toggle") == "1":
                     bridge.put("touch_session_toggle", "")
                     if session.is_active:
                         sid = session.stop_session()
                         if behavioral: behavioral.refresh_now()
-                        print(f"[BRIDGE] Touch → session {sid} stopped")
+                        print(f"[BRIDGE] Touch tap → session {sid} stopped")
                     else:
                         sid = session.start_session()
-                        print(f"[BRIDGE] Touch → session {sid} started")
+                        print(f"[BRIDGE] Touch tap → session {sid} started")
+
+                # ── Handle long press: camera toggle ──────────────────────────
+                if bridge.get("touch_camera_toggle") == "1":
+                    bridge.put("touch_camera_toggle", "")
+                    current = sensors.camera_active
+                    sensors.set_camera_active(not current)
+                    state_str = "ON" if not current else "OFF"
+                    print(f"[BRIDGE] Touch long press → camera {state_str}")
+                    # Push updated camera state back to MCU for LED indicator
+                    bridge.put("camera_active_state", "1" if not current else "0")
 
         except Exception as e:
             print(f"[BRIDGE] Push error: {e}")
@@ -186,9 +191,8 @@ def main():
     camera = CameraInference(session, sensors)
     camera.start()
 
-    # Bridge push loop (only runs when Bridge is available on UNO Q)
-    threading.Thread(target=_bridge_push_loop,    daemon=True).start()
-    threading.Thread(target=_discovery_listener,  daemon=True).start()
+    threading.Thread(target=_bridge_push_loop,   daemon=True).start()
+    threading.Thread(target=_discovery_listener, daemon=True).start()
 
     print(f"\n[BOOT] All systems nominal")
     print(f"[BOOT] Dashboard : http://localhost:{API_PORT}")
